@@ -1,4 +1,4 @@
-const NoteCard = () => {
+const NoteView = () => {
     return (
         <main className="flex min-h-screen justify-center bg-slate-100 px-4 py-8 sm:px-6 sm:py-12">
             <section className="flex min-h-[75vh] w-full max-w-4xl flex-col rounded-xl border border-slate-200 bg-white px-6 py-6 shadow-sm sm:px-12 sm:py-10">
@@ -24,4 +24,4 @@ const NoteCard = () => {
     )
 }
 
-export default NoteCard
+export default NoteView

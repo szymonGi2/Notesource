@@ -1,7 +1,7 @@
 import { useState } from "react";
 import NoteGrid from "./components/NoteGrid";
 import type { Note } from "./types/note_type";
-// import NoteCard from "./components/NoteView"
+// import NoteView from "./components/NoteView"
 
 const INITIAL_NOTES: Note[] = [
   {
@@ -39,7 +39,7 @@ const App = () => {
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <NoteGrid list={noteList} />
       </section>
-      {/* <NoteCard/> */}
+      {/* <NoteView/> */}
     </main>
   );
 };
