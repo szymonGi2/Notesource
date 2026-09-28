@@ -1,7 +1,7 @@
 import { useState } from "react";
 import NoteGrid from "./components/NoteGrid";
 import type { Note } from "./types/note_type";
-// import NoteView from "./components/NoteView"
+import NoteView from "./components/NoteView";
 
 const INITIAL_NOTES: Note[] = [
   {
@@ -26,6 +26,18 @@ const INITIAL_NOTES: Note[] = [
 
 const App = () => {
   const [noteList, setNoteList] = useState<Note[]>(INITIAL_NOTES);
+  const [selectedNoteIndex, setSelectedNoteIndex] = useState<number | null>(null);
+
+  const saveNote = (updatedNote: Note) => {
+    if (selectedNoteIndex === null) return;
+
+    setNoteList((notes) =>
+      notes.map((note, index) =>
+        index === selectedNoteIndex ? updatedNote : note,
+      ),
+    );
+    setSelectedNoteIndex(null);
+  };
 
   return (
     <main className="min-h-screen bg-slate-100">
@@ -37,9 +49,16 @@ const App = () => {
         </div>
       </header>
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        <NoteGrid list={noteList} />
+        {selectedNoteIndex === null ? (
+          <NoteGrid list={noteList} onSelect={setSelectedNoteIndex} />
+        ) : (
+          <NoteView
+            note={noteList[selectedNoteIndex]}
+            onSave={saveNote}
+            onBack={() => setSelectedNoteIndex(null)}
+          />
+        )}
       </section>
-      {/* <NoteView/> */}
     </main>
   );
 };
