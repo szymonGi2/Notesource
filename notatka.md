@@ -108,3 +108,103 @@ App otwiera NoteView
 ### Zapamiętaj
 
 **Interfejs określa kształt callbacku. `App` przekazuje jego działanie. Komponent wywołuje callback w reakcji na kliknięcie.**
+
+---
+
+## Błąd ustawiania kategorii w `Createbar.tsx`
+
+Problem występował w obsłudze zmiany kategorii:
+
+```tsx
+onChange={(e) => setNoteCategory(e.target.value)}
+```
+
+To błąd zgodności typów w TypeScript. Wartość `e.target.value` z elementu HTML `<select>` ma typ `string`, czyli może być dowolnym tekstem. Stan kategorii dopuszcza jednak tylko trzy konkretne wartości:
+
+```tsx
+type Note_Category = "Personal" | "Work" | "Important";
+
+const [noteCategory, setNoteCategory] = useState<Note_Category>("Personal");
+```
+
+`Note_Category` jest unią typów literałowych: każda z wymienionych wartości jest dozwolona, ale na przykład `"Shopping"` już nie. TypeScript nie wywnioskuje typu wartości pola na podstawie zapisanych w JSX elementów `<option>`. Dlatego nie pozwala przekazać dowolnego `string` do `setNoteCategory`.
+
+### Poprawka — sprawdzenie wartości przed zmianą stanu
+
+```tsx
+onChange={(e) => {
+  const category = e.currentTarget.value;
+  if (category === "Personal" || category === "Work" || category === "Important") {
+    setNoteCategory(category);
+  }
+}}
+```
+
+1. `e.currentTarget` wskazuje element `<select>`, do którego przypisano tę obsługę zdarzenia. Jego `value` nadal ma typ `string` — sama zamiana `target` na `currentTarget` nie rozwiązuje błędu.
+2. Warunek sprawdza, czy odczytana wartość jest jedną z trzech dozwolonych kategorii.
+3. Wewnątrz warunku TypeScript zawęża typ zmiennej `category` do `"Personal" | "Work" | "Important"`. Dzięki temu można bezpiecznie przekazać ją do `setNoteCategory`.
+4. Jeśli wartość nie pasuje do żadnej kategorii, stan pozostaje bez zmian.
+
+Można też napisać `e.currentTarget.value as Note_Category`, ale takie rzutowanie jedynie zapewnia kompilator, że znamy typ. Nie sprawdza wartości podczas działania aplikacji. Zastosowany warunek wykonuje rzeczywistą kontrolę.
+
+### Zapamiętaj
+
+**Każda wartość `Note_Category` jest tekstem, ale nie każdy tekst jest poprawną kategorią. Przed zapisaniem ogólnego `string` do takiego stanu sprawdź, czy należy do dozwolonych wartości.**
+
+---
+
+## Dlaczego `onCreate` z interfejsu nie jest dostępne w komponencie?
+
+**Interfejs opisuje typ funkcji, ale jej nie tworzy.** Ten zapis:
+
+```tsx
+interface CreatebarProps {
+  note: Note;
+  onCreate: (note: Note) => void;
+}
+```
+
+oznacza: „propsy mają zawierać funkcję `onCreate`, która przyjmuje notatkę”. Nie deklaruje zmiennej `onCreate` dostępnej w komponencie.
+
+Do połączenia komponentów potrzebne są trzy elementy:
+
+1. **Odebranie funkcji przez propsy.** Zapis `Createbar = () =>` nie przyjmuje żadnych propsów. Użyj:
+
+   ```tsx
+   interface CreatebarProps {
+     onCreate: (note: Note) => void;
+   }
+
+   const Createbar = ({ onCreate }: CreatebarProps) => {
+     // istniejące stany i JSX
+   };
+   ```
+
+   Pole `note` możesz usunąć — dane nowej notatki zbierasz już w stanach formularza.
+
+2. **Wywołanie funkcji z danymi.** `onClick={() => onCreate}` tylko zwraca funkcję, bez jej uruchomienia. Potrzebujesz:
+
+   ```tsx
+   onClick={() => onCreate({
+     title: noteTitle,
+     content: noteContent,
+     category: noteCategory,
+   })}
+   ```
+
+3. **Przekazanie działającej funkcji z `App.tsx`.** Wewnątrz `App` zdefiniuj:
+
+   ```tsx
+   const createNote = (note: Note) => {
+     setNoteList((notes) => [...notes, note]);
+     setVisibleCreatebar(false);
+   };
+   ```
+
+   Następnie przekaż ją do komponentu:
+
+   ```tsx
+   {visibleCreatebar && <Createbar onCreate={createNote} />}
+   ```
+
+`App` definiuje działanie, props przekazuje funkcję, a `Createbar` wywołuje ją po kliknięciu.
