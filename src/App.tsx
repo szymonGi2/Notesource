@@ -47,6 +47,10 @@ const App = () => {
     setVisibleCreatebar(false);
   }
 
+  const deleteNote = (noteIndex: number) => {
+    setNoteList((notes) => notes.filter((_, index) => index !== noteIndex));
+  };
+
   return (
     <main className="min-h-screen bg-slate-100">
       <header className="border-b border-slate-200 bg-white">
@@ -68,7 +72,7 @@ const App = () => {
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         {visibleCreatebar && <Createbar onCreate={createNote} />}
         {selectedNoteIndex === null ? (
-          <NoteGrid list={noteList} onSelect={setSelectedNoteIndex} />
+          <NoteGrid list={noteList} onSelect={setSelectedNoteIndex} onDelete={deleteNote} />
         ) : (
           <NoteView
             note={noteList[selectedNoteIndex]}
