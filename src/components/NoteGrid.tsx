@@ -21,7 +21,7 @@ const NoteGrid = ({ list, onSelect, onDelete }: NoteListProps) => {
   }
 
   return (
-    <div className="grid justify-center gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="grid justify-center gap-4 sm:grid-cols-2">
       {list.map((note, index) => (
         <article
           key={`${note.title}-${index}`}

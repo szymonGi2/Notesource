@@ -1,8 +1,9 @@
 import { useState } from "react";
 import NoteGrid from "./components/NoteGrid";
-import type { Note } from "./types/note_type";
+import type { Note, Note_Category } from "./types/note_type";
 import NoteView from "./components/NoteView";
 import Createbar from "./components/Createbar";
+import Sidebar from "./components/Sidebar";
 
 const INITIAL_NOTES: Note[] = [
   {
@@ -29,6 +30,10 @@ const App = () => {
   const [noteList, setNoteList] = useState<Note[]>(INITIAL_NOTES);
   const [selectedNoteIndex, setSelectedNoteIndex] = useState<number | null>(null);
   const [visibleCreatebar, setVisibleCreatebar] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<Note_Category | null>(null);
+  const visibleNotes = noteList
+    .map((note, index) => ({ note, index }))
+    .filter(({ note }) => selectedCategory === null || note.category === selectedCategory);
 
   const saveNote = (updatedNote: Note) => {
     if (selectedNoteIndex === null) return;
@@ -44,6 +49,7 @@ const App = () => {
   const createNote = (note : Note) => {
     //notes in setNoteList means copying the previous state of the list, then adding the note as the object passed via onCreate
     setNoteList((notes) => [...notes, note]);
+    setSelectedCategory(null);
     setVisibleCreatebar(false);
   }
 
@@ -69,10 +75,30 @@ const App = () => {
           </button>
         </div>
       </header>
-      <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <section className="mx-auto grid max-w-6xl items-start gap-6 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-8">
+        <Sidebar
+          notes={noteList}
+          selectedCategory={selectedCategory}
+          onSelectCategory={(category) => {
+            setSelectedCategory(category);
+            setSelectedNoteIndex(null);
+          }}
+        />
+        <div className="min-w-0">
         {visibleCreatebar && <Createbar onCreate={createNote} />}
         {selectedNoteIndex === null ? (
-          <NoteGrid list={noteList} onSelect={setSelectedNoteIndex} onDelete={deleteNote} />
+          selectedCategory !== null && visibleNotes.length === 0 ? (
+            <div role="status" className="rounded-lg border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
+              <h2 className="font-serif text-2xl font-semibold text-slate-900">No notes in {selectedCategory}</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">Choose another category or add a new note.</p>
+            </div>
+          ) : (
+            <NoteGrid
+              list={visibleNotes.map(({ note }) => note)}
+              onSelect={(index) => setSelectedNoteIndex(visibleNotes[index].index)}
+              onDelete={(index) => deleteNote(visibleNotes[index].index)}
+            />
+          )
         ) : (
           <NoteView
             note={noteList[selectedNoteIndex]}
@@ -80,6 +106,7 @@ const App = () => {
             onBack={() => setSelectedNoteIndex(null)}
           />
         )}
+        </div>
       </section>
     </main>
   );
