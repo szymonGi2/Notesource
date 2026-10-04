@@ -4,6 +4,7 @@ import type { Note, Note_Category } from "./types/note_type";
 import NoteView from "./components/NoteView";
 import Createbar from "./components/Createbar";
 import Sidebar from "./components/Sidebar";
+import Searchbar from "./components/Searchbar";
 
 const INITIAL_NOTES: Note[] = [
   {
@@ -31,9 +32,20 @@ const App = () => {
   const [selectedNoteIndex, setSelectedNoteIndex] = useState<number | null>(null);
   const [visibleCreatebar, setVisibleCreatebar] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<Note_Category | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const normalizedSearchQuery = searchQuery.trim().toLowerCase();
+  
   const visibleNotes = noteList
     .map((note, index) => ({ note, index }))
-    .filter(({ note }) => selectedCategory === null || note.category === selectedCategory);
+    .filter(({ note }) => selectedCategory === null || note.category === selectedCategory)
+    .filter(({ note }) => {
+      return (
+        normalizedSearchQuery === "" ||
+        note.title.toLowerCase().includes(normalizedSearchQuery) ||
+        note.content.toLowerCase().includes(normalizedSearchQuery) ||
+        note.category.toLowerCase().includes(normalizedSearchQuery)
+      );
+    });
 
   const saveNote = (updatedNote: Note) => {
     if (selectedNoteIndex === null) return;
@@ -85,12 +97,19 @@ const App = () => {
           }}
         />
         <div className="min-w-0">
+        <Searchbar value={searchQuery} onSearch={setSearchQuery} />
         {visibleCreatebar && <Createbar onCreate={createNote} />}
         {selectedNoteIndex === null ? (
-          selectedCategory !== null && visibleNotes.length === 0 ? (
+          noteList.length > 0 && visibleNotes.length === 0 ? (
             <div role="status" className="rounded-lg border border-slate-200 bg-white px-5 py-12 text-center shadow-sm">
-              <h2 className="font-serif text-2xl font-semibold text-slate-900">No notes in {selectedCategory}</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-500">Choose another category or add a new note.</p>
+              <h2 className="font-serif text-2xl font-semibold text-slate-900">
+                {normalizedSearchQuery ? "No matching notes" : `No notes in ${selectedCategory}`}
+              </h2>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                {normalizedSearchQuery
+                  ? "Try a different search or choose another category."
+                  : "Choose another category or add a new note."}
+              </p>
             </div>
           ) : (
             <NoteGrid

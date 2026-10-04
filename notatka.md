@@ -208,3 +208,37 @@ Do połączenia komponentów potrzebne są trzy elementy:
    ```
 
 `App` definiuje działanie, props przekazuje funkcję, a `Createbar` wywołuje ją po kliknięciu.
+
+# Jak działa filtrowanie notatek
+
+Fragment `visibleNotes` w `src/App.tsx` tworzy listę notatek widocznych po zastosowaniu filtra kategorii i wyszukiwania.
+
+```tsx
+const visibleNotes = noteList
+  .map((note, index) => ({ note, index }))
+  .filter(({ note }) => selectedCategory === null || note.category === selectedCategory)
+  .filter(({ note }) => {
+    return (
+      normalizedSearchQuery === "" ||
+      note.title.toLowerCase().includes(normalizedSearchQuery) ||
+      note.content.toLowerCase().includes(normalizedSearchQuery) ||
+      note.category.toLowerCase().includes(normalizedSearchQuery)
+    );
+  });
+```
+
+## Krok po kroku
+
+1. `noteList` to pełna lista notatek przechowywana w stanie aplikacji.
+2. `.map((note, index) => ({ note, index }))` zamienia każdą notatkę w obiekt zawierający samą notatkę oraz jej pierwotny indeks na liście. Indeks pozwala później poprawnie otworzyć lub usunąć notatkę, nawet gdy lista jest przefiltrowana.
+3. Pierwszy `.filter(...)` obsługuje kategorię:
+   - gdy `selectedCategory === null`, żadna kategoria nie jest wybrana i notatki przechodzą dalej;
+   - w przeciwnym razie przechodzą tylko notatki, których `note.category` jest równe wybranej kategorii.
+4. Drugi `.filter(...)` obsługuje wyszukiwanie:
+   - puste `normalizedSearchQuery` oznacza, że wszystkie notatki, które przeszły filtr kategorii, pozostają widoczne;
+   - w przeciwnym razie sprawdzane jest, czy zapytanie występuje w tytule, treści lub nazwie kategorii notatki.
+5. `toLowerCase()` sprawia, że porównanie nie rozróżnia wielkości liter, a `includes()` sprawdza, czy szukany tekst znajduje się w danym polu.
+
+Filtry są łączone: notatka musi pasować do wybranej kategorii (jeśli ją wybrano) **i** do zapytania wyszukiwania (jeśli nie jest puste).
+
+`normalizedSearchQuery` powstaje wcześniej z wpisanego tekstu przez `trim().toLowerCase()`. `trim()` usuwa zbędne spacje z początku i końca zapytania, a `toLowerCase()` ujednolica wielkość liter.
